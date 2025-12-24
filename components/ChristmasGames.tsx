@@ -7,40 +7,46 @@ const ChristmasGames: React.FC = () => {
   const [activeGame, setActiveGame] = useState<GameType>(null);
 
   return (
-    <div className="glass p-8 rounded-3xl w-full max-w-4xl mx-auto shadow-2xl relative z-10 mt-12 overflow-hidden">
-      <div className="flex flex-col items-center mb-8">
-        <h2 className="text-4xl font-christmas text-white mb-2 text-center">Oficina de Jogos do Pai Natal</h2>
-        <p className="text-white/60 text-center">Aprende chinês a brincar!</p>
+    <div className="bg-white/80 border-4 border-white rounded-[40px] p-8 w-full max-w-4xl mx-auto shadow-xl relative z-10 mt-6 overflow-hidden">
+      <div className="flex flex-col items-center mb-10">
+        <div className="bg-red-500 text-white px-6 py-2 rounded-full text-sm font-bold mb-4 uppercase tracking-widest kawaii-shadow">
+          Área de Diversão
+        </div>
+        <h2 className="text-5xl font-christmas text-red-600 mb-2 text-center drop-shadow-sm">Festa dos Jogos</h2>
+        <p className="text-blue-500 font-medium text-center">Vamos jogar e aprender palavras mágicas!</p>
       </div>
 
       {!activeGame ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <GameCard 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <GameButton 
             title="Pares Mágicos" 
-            icon="🃏" 
-            desc="Encontra os pares entre Português e Chinês." 
+            icon="🎴" 
+            color="bg-pink-400"
+            desc="Encontra os pares certos!" 
             onClick={() => setActiveGame('memory')}
           />
-          <GameCard 
-            title="Corrida do Trenó" 
-            icon="🛷" 
-            desc="Responde rápido para o Pai Natal chegar a tempo!" 
+          <GameButton 
+            title="Salva o Natal" 
+            icon="🚀" 
+            color="bg-blue-400"
+            desc="Responde rápido ao quiz!" 
             onClick={() => setActiveGame('quiz')}
           />
-          <GameCard 
-            title="O Segredo do Bolo Rei" 
-            icon="🥮" 
-            desc="Clica nas fatias para encontrar o brinde." 
+          <GameButton 
+            title="Tesouro do Bolo" 
+            icon="💎" 
+            color="bg-orange-400"
+            desc="Onde está o brinde?" 
             onClick={() => setActiveGame('bolorei')}
           />
         </div>
       ) : (
-        <div>
+        <div className="animate-fade-in">
           <button 
             onClick={() => setActiveGame(null)}
-            className="mb-6 text-white/50 hover:text-white flex items-center gap-2 transition-colors"
+            className="mb-8 bg-blue-100 hover:bg-blue-200 text-blue-600 px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all shadow-sm"
           >
-            ← Voltar para a Oficina
+            ⬅️ Voltar ao Menu
           </button>
           {activeGame === 'memory' && <MemoryGame />}
           {activeGame === 'quiz' && <QuizGame />}
@@ -51,14 +57,15 @@ const ChristmasGames: React.FC = () => {
   );
 };
 
-const GameCard = ({ title, icon, desc, onClick }: { title: string, icon: string, desc: string, onClick: () => void }) => (
+const GameButton = ({ title, icon, color, desc, onClick }: { title: string, icon: string, color: string, desc: string, onClick: () => void }) => (
   <button 
     onClick={onClick}
-    className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-all hover:scale-105 text-center group"
+    className={`${color} p-8 rounded-[32px] hover:scale-105 transition-all text-white text-center group shadow-lg relative overflow-hidden`}
   >
-    <div className="text-5xl mb-4 group-hover:animate-bounce">{icon}</div>
-    <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-    <p className="text-sm text-white/60">{desc}</p>
+    <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full -mr-8 -mt-8"></div>
+    <div className="text-6xl mb-4 group-hover:rotate-12 transition-transform">{icon}</div>
+    <h3 className="text-2xl font-bold mb-2">{title}</h3>
+    <p className="text-white/80 text-sm font-medium">{desc}</p>
   </button>
 );
 
@@ -67,7 +74,7 @@ const MemoryGame = () => {
   const [selected, setSelected] = useState<number[]>([]);
 
   useEffect(() => {
-    const gameTerms = INITIAL_TERMS.slice(0, 6);
+    const gameTerms = [...INITIAL_TERMS].sort(() => Math.random() - 0.5).slice(0, 4);
     const deck = gameTerms.flatMap((term, i) => [
       { id: i * 2, text: term.portuguese, type: 'pt' as const, pairId: i, flipped: false, solved: false },
       { id: i * 2 + 1, text: term.chinese, type: 'cn' as const, pairId: i, flipped: false, solved: false }
@@ -76,7 +83,7 @@ const MemoryGame = () => {
   }, []);
 
   const handleFlip = (id: number) => {
-    if (selected.length === 2 || cards.find(c => c.id === id)?.flipped) return;
+    if (selected.length === 2 || cards.find(c => c.id === id)?.flipped || cards.find(c => c.id === id)?.solved) return;
     
     const newCards = cards.map(c => c.id === id ? { ...c, flipped: true } : c);
     setCards(newCards);
@@ -86,8 +93,10 @@ const MemoryGame = () => {
     if (newSelected.length === 2) {
       const [first, second] = newSelected.map(selId => newCards.find(c => c.id === selId)!);
       if (first.pairId === second.pairId) {
-        setCards(prev => prev.map(c => c.pairId === first.pairId ? { ...c, solved: true } : c));
-        setSelected([]);
+        setTimeout(() => {
+          setCards(prev => prev.map(c => c.pairId === first.pairId ? { ...c, solved: true, flipped: true } : c));
+          setSelected([]);
+        }, 500);
       } else {
         setTimeout(() => {
           setCards(prev => prev.map(c => newSelected.includes(c.id) ? { ...c, flipped: false } : c));
@@ -98,21 +107,23 @@ const MemoryGame = () => {
   };
 
   return (
-    <div className="grid grid-cols-3 md:grid-cols-4 gap-4 animate-fade-in">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {cards.map(card => (
         <div 
           key={card.id}
           onClick={() => handleFlip(card.id)}
-          className={`h-24 md:h-32 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-500 transform perspective-1000 ${
-            card.flipped || card.solved ? 'bg-red-600 rotate-y-180' : 'bg-white/10'
+          className={`h-32 flex items-center justify-center rounded-3xl cursor-pointer transition-all duration-500 shadow-md ${
+            card.flipped || card.solved 
+              ? (card.solved ? 'bg-green-400 scale-95 opacity-80' : 'bg-red-400') 
+              : 'bg-white hover:bg-red-50 border-4 border-red-100'
           }`}
         >
           {card.flipped || card.solved ? (
-            <span className={`text-white font-bold text-sm md:text-base px-2 text-center ${card.type === 'cn' ? 'font-chinese text-xl' : ''}`}>
+            <span className={`text-white font-bold text-center px-2 ${card.type === 'cn' ? 'font-chinese text-2xl' : 'text-lg'}`}>
               {card.text}
             </span>
           ) : (
-            <span className="text-3xl opacity-30">🎁</span>
+            <span className="text-4xl">🍬</span>
           )}
         </div>
       ))}
@@ -124,6 +135,7 @@ const QuizGame = () => {
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   
   const questions = useMemo(() => {
     return INITIAL_TERMS.sort(() => Math.random() - 0.5).slice(0, 5).map(term => {
@@ -142,44 +154,65 @@ const QuizGame = () => {
   }, []);
 
   const handleAnswer = (ans: string) => {
-    if (ans === questions[current].correct) setScore(s => s + 1);
-    if (current < questions.length - 1) {
-      setCurrent(c => c + 1);
+    if (feedback) return;
+    const isCorrect = ans === questions[current].correct;
+    if (isCorrect) {
+      setScore(s => s + 1);
+      setFeedback('correct');
     } else {
-      setFinished(true);
+      setFeedback('wrong');
     }
+
+    setTimeout(() => {
+      setFeedback(null);
+      if (current < questions.length - 1) {
+        setCurrent(c => c + 1);
+      } else {
+        setFinished(true);
+      }
+    }, 1000);
   };
 
   if (finished) return (
-    <div className="text-center animate-fade-in">
-      <div className="text-6xl mb-4">🏆</div>
-      <h3 className="text-2xl text-white font-bold">Incrível!</h3>
-      <p className="text-white/60 mb-6">Ajudaste o Pai Natal a entregar {score} de {questions.length} presentes.</p>
-      <button onClick={() => {setFinished(false); setCurrent(0); setScore(0);}} className="bg-red-600 text-white px-6 py-2 rounded-full">Tentar de novo</button>
+    <div className="text-center bg-blue-50 p-10 rounded-[40px] border-4 border-white shadow-inner">
+      <div className="text-8xl mb-4 animate-bounce">🎊</div>
+      <h3 className="text-3xl text-blue-600 font-bold mb-2">Parabéns!</h3>
+      <p className="text-blue-400 font-medium mb-8">Acertaste {score} de {questions.length} palavras!</p>
+      <button 
+        onClick={() => window.location.reload()} 
+        className="bg-red-500 text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-red-600 transition-colors text-xl"
+      >
+        Jogar de Novo 🎄
+      </button>
     </div>
   );
 
   return (
-    <div className="text-center animate-fade-in">
-      <div className="relative h-4 bg-white/10 rounded-full mb-8 overflow-hidden">
-        <div 
-          className="absolute h-full bg-red-600 transition-all duration-500"
-          style={{ width: `${(current / questions.length) * 100}%` }}
-        ></div>
-        <div className="absolute right-0 top-0 h-full flex items-center pr-2 text-xs text-white">🛷</div>
+    <div className="max-w-md mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <span className="bg-red-100 text-red-600 px-4 py-1 rounded-full font-bold">Pergunta {current + 1}/{questions.length}</span>
+        <span className="text-2xl">⭐ {score}</span>
       </div>
-      <div className="text-6xl mb-4">{questions[current].icon}</div>
-      <h3 className="text-2xl text-white mb-8">Como se diz <span className="text-red-400 font-bold">"{questions[current].term}"</span>?</h3>
-      <div className="grid grid-cols-1 gap-4">
-        {questions[current].options.map(opt => (
-          <button 
-            key={opt}
-            onClick={() => handleAnswer(opt)}
-            className="bg-white/5 border border-white/20 p-4 rounded-xl text-white text-2xl font-chinese hover:bg-white/20 transition-all"
-          >
-            {opt}
-          </button>
-        ))}
+      <div className={`bg-white p-10 rounded-[40px] text-center border-4 ${feedback === 'correct' ? 'border-green-400' : feedback === 'wrong' ? 'border-red-400' : 'border-blue-100'} transition-colors shadow-lg`}>
+        <div className="text-7xl mb-6 animate-bounce-subtle">{questions[current].icon}</div>
+        <p className="text-xl text-gray-500 mb-2">Como dizemos...</p>
+        <h3 className="text-4xl font-bold text-blue-600 mb-8">{questions[current].term}?</h3>
+        <div className="grid grid-cols-1 gap-4">
+          {questions[current].options.map(opt => (
+            <button 
+              key={opt}
+              onClick={() => handleAnswer(opt)}
+              disabled={!!feedback}
+              className={`py-5 rounded-3xl text-3xl font-chinese transition-all border-b-4 active:border-b-0 active:translate-y-1 ${
+                feedback && opt === questions[current].correct ? 'bg-green-400 border-green-600 text-white' : 
+                feedback && opt !== questions[current].correct ? 'bg-gray-100 border-gray-200 text-gray-300' :
+                'bg-blue-500 border-blue-700 text-white hover:bg-blue-400'
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -190,47 +223,52 @@ const BoloReiGame = () => {
   const [found, setFound] = useState(false);
 
   useEffect(() => {
-    const gameSlices = INITIAL_TERMS.sort(() => Math.random() - 0.5).slice(0, 7).map((t, i) => ({ id: i, content: t as ChristmasTerm | 'surprise', revealed: false }));
-    gameSlices.push({ id: 8, content: 'surprise' as const, revealed: false });
+    const gameTerms = [...INITIAL_TERMS].sort(() => Math.random() - 0.5).slice(0, 5);
+    const gameSlices = gameTerms.map((t, i) => ({ id: i, content: t as ChristmasTerm | 'surprise', revealed: false }));
+    gameSlices.push({ id: 99, content: 'surprise' as const, revealed: false });
     setSlices(gameSlices.sort(() => Math.random() - 0.5));
   }, []);
 
   const reveal = (id: number) => {
+    if (found) return;
     setSlices(prev => prev.map(s => s.id === id ? { ...s, revealed: true } : s));
     const slice = slices.find(s => s.id === id);
     if (slice?.content === 'surprise') setFound(true);
   };
 
   return (
-    <div className="text-center animate-fade-in">
-      <h3 className="text-xl text-white mb-6">Onde está o brinde? Clica nas fatias! 🥧</h3>
-      <div className="grid grid-cols-4 gap-4 mb-8">
+    <div className="text-center">
+      <h3 className="text-2xl text-orange-600 font-bold mb-8">Onde está o Envelope Vermelho (Hóngbāo)? 🧧</h3>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-10">
         {slices.map(slice => (
           <div 
             key={slice.id}
-            onClick={() => !slice.revealed && reveal(slice.id)}
-            className={`aspect-square flex items-center justify-center rounded-full cursor-pointer transition-all ${
-              slice.revealed ? 'bg-orange-900/40 border-2 border-yellow-600/50' : 'bg-orange-800 hover:bg-orange-700'
+            onClick={() => reveal(slice.id)}
+            className={`aspect-square flex items-center justify-center rounded-3xl cursor-pointer transition-all border-4 ${
+              slice.revealed 
+                ? 'bg-yellow-50 border-yellow-200' 
+                : 'bg-orange-100 hover:bg-orange-200 border-white animate-bounce-subtle'
             }`}
           >
             {slice.revealed ? (
               slice.content === 'surprise' ? (
-                <div className="animate-bounce text-3xl">🧧</div>
+                <div className="text-4xl animate-bounce">🧧</div>
               ) : (
                 <div className="flex flex-col items-center">
-                   <span className="text-xs text-white/50">{slice.content.portuguese}</span>
-                   <span className="text-lg font-chinese text-yellow-400">{slice.content.chinese}</span>
+                   <span className="text-[10px] text-gray-400 font-bold uppercase">{slice.content.portuguese}</span>
+                   <span className="text-2xl font-chinese text-orange-500">{slice.content.chinese}</span>
                 </div>
               )
             ) : (
-              <span className="text-white/20">🥧</span>
+              <span className="text-4xl opacity-50">🍰</span>
             )}
           </div>
         ))}
       </div>
       {found && (
-        <div className="bg-yellow-600/20 p-4 rounded-xl border border-yellow-500/50">
-          <p className="text-yellow-200">Encontraste o brinde! Ganhaste um Envelope Vermelho (Hóngbāo) da sorte! 🧧✨</p>
+        <div className="bg-red-500 text-white p-8 rounded-[40px] animate-fade-in shadow-xl inline-block">
+          <h4 className="text-3xl font-bold mb-2">YAY! ENCONTRASTE! 🧧✨</h4>
+          <p className="font-medium">O envelope vermelho traz muita sorte no Ano Novo!</p>
         </div>
       )}
     </div>
